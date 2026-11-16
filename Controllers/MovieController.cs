@@ -26,9 +26,41 @@ public class MovieController : Controller
         _reviewService = reviewService;
     }
 
-    public async Task<IActionResult> Index()
+    // GET: /Movie/Index?sortOrder=name_desc&page=1
+    public async Task<IActionResult> Index(string? sortOrder, int page = 1)
     {
-        var movies = await _db.Movies!.Include(m => m.Genre).ToListAsync();
+        int pageSize = 3;
+
+        ViewBag.CurrentSort = sortOrder;
+        ViewBag.NameSortParm = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        ViewBag.IdSortParm = sortOrder == "id_asc" ? "id_desc" : "id_asc";
+        ViewBag.GenreSortParm = sortOrder == "genre_asc" ? "genre_desc" : "genre_asc";
+
+        var moviesQuery = _db.Movies!.Include(m => m.Genre).AsQueryable();
+
+        moviesQuery = sortOrder switch
+        {
+            "name_desc" => moviesQuery.OrderByDescending(m => m.Name),
+            "id_asc" => moviesQuery.OrderBy(m => m.Id),
+            "id_desc" => moviesQuery.OrderByDescending(m => m.Id),
+            "genre_asc" => moviesQuery.OrderBy(m => m.Genre!.Name),
+            "genre_desc" => moviesQuery.OrderByDescending(m => m.Genre!.Name),
+            _ => moviesQuery.OrderBy(m => m.Name)
+        };
+
+        int totalItems = await moviesQuery.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        if (page < 1) page = 1;
+        if (page > totalPages && totalPages > 0) page = totalPages;
+
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+
+        var movies = await moviesQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
         return View(movies);
     }
     

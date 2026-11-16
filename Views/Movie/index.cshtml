@@ -10,67 +10,62 @@
 
     <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
         <thead>
-            <tr style="background-color: #2c3e50; color: white; text-align: left;">
-                <th style="padding: 12px;">
-                    <a asp-action="Index" asp-route-sortOrder="@ViewBag.IdSortParm" style="color: white; text-decoration: none;">
-                        ID ↕
-                    </a>
-                </th>
-                <th style="padding: 12px;">
-                    <a asp-action="Index" asp-route-sortOrder="@ViewBag.NameSortParm" style="color: white; text-decoration: none;">
-                        Titre ↕
-                    </a>
-                </th>
-                <th style="padding: 12px;">
-                    <a asp-action="Index" asp-route-sortOrder="@ViewBag.GenreSortParm" style="color: white; text-decoration: none;">
-                        Genre ↕
-                    </a>
-                </th>
-                <th style="padding: 12px;">Actions</th>
-            </tr>
+        <tr style="background-color: #2c3e50; color: white; text-align: left;">
+            <th style="padding: 12px;">
+                <a asp-action="Index" asp-route-sortOrder="@ViewBag.IdSortParm" style="color: white; text-decoration: none;">ID ↕</a>
+            </th>
+            <th style="padding: 12px;">
+                <a asp-action="Index" asp-route-sortOrder="@ViewBag.NameSortParm" style="color: white; text-decoration: none;">Titre ↕</a>
+            </th>
+            <th style="padding: 12px;">
+                <a asp-action="Index" asp-route-sortOrder="@ViewBag.GenreSortParm" style="color: white; text-decoration: none;">Genre ↕</a>
+            </th>
+            <th style="padding: 12px;">Disponibilité</th>
+            <th style="padding: 12px;">Actions</th>
+        </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model)
-            {
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 12px;">@item.Id</td>
-                    <td style="padding: 12px; font-weight: bold;">@item.Name</td>
-                    <td style="padding: 12px;">@(item.Genre?.Name ?? "—")</td>
-                    <td style="padding: 12px;">
-                        <a asp-action="Edit" asp-route-id="@item.Id" style="color: #2980b9; margin-right: 10px;">Edit</a>
-                        <a asp-action="Details" asp-route-id="@item.Id" style="color: #16a085; margin-right: 10px;">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" style="color: #c0392b;">Delete</a>
-                    </td>
-                </tr>
-            }
+        @foreach (var item in Model)
+        {
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 12px;">@item.Id</td>
+            <td style="padding: 12px; font-weight: bold;">@item.Name</td>
+            <td style="padding: 12px;">@(item.Genre?.Name ?? "—")</td>
+            <td style="padding: 12px;">@(item.IsAvailable ? "✅ Disponible" : "❌ Loué")</td>
+            <td style="padding: 12px;">
+                <a asp-action="Edit" asp-route-id="@item.Id" style="color: #2980b9; margin-right: 10px;">Edit</a>
+                <a asp-action="Details" asp-route-id="@item.Id" style="color: #16a085; margin-right: 10px;">Details</a>
+                <a asp-action="Delete" asp-route-id="@item.Id" style="color: #c0392b;">Delete</a>
+            </td>
+        </tr>
+        }
         </tbody>
     </table>
 
-    <!-- Pagination Controls -->
     @if (ViewBag.TotalPages > 1)
     {
-        <div style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 12px;">
-            @if (ViewBag.CurrentPage > 1)
-            {
-                <a asp-action="Index" 
-                   asp-route-page="@(ViewBag.CurrentPage - 1)" 
-                   asp-route-sortOrder="@ViewBag.CurrentSort"
-                   style="padding: 6px 12px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px;">
-                    ← Précédent
-                </a>
-            }
+    <div style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 12px;">
+        @if (ViewBag.CurrentPage > 1)
+        {
+        <a asp-action="Index"
+           asp-route-page="@(ViewBag.CurrentPage - 1)"
+           asp-route-sortOrder="@ViewBag.CurrentSort"
+           style="padding: 6px 12px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px;">
+            ← Précédent
+        </a>
+        }
 
-            <span>Page <strong>@ViewBag.CurrentPage</strong> sur <strong>@ViewBag.TotalPages</strong></span>
+        <span>Page <strong>@ViewBag.CurrentPage</strong> sur <strong>@ViewBag.TotalPages</strong></span>
 
-            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
-            {
-                <a asp-action="Index" 
-                   asp-route-page="@(ViewBag.CurrentPage + 1)" 
-                   asp-route-sortOrder="@ViewBag.CurrentSort"
-                   style="padding: 6px 12px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px;">
-                    Suivant →
-                </a>
-            }
-        </div>
+        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+        {
+        <a asp-action="Index"
+           asp-route-page="@(ViewBag.CurrentPage + 1)"
+           asp-route-sortOrder="@ViewBag.CurrentSort"
+           style="padding: 6px 12px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px;">
+            Suivant →
+        </a>
+        }
+    </div>
     }
 </div>
