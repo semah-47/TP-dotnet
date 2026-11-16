@@ -25,8 +25,7 @@ public class MovieController : Controller
         _rentalService = rentalService;
         _reviewService = reviewService;
     }
-
-    // GET: /Movie/Index?sortOrder=name_desc&page=1
+    
     public async Task<IActionResult> Index(string? sortOrder, int page = 1)
     {
         int pageSize = 3;
@@ -76,6 +75,11 @@ public class MovieController : Controller
     {
         if (!ModelState.IsValid)
         {
+            ViewBag.Errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
             ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
             return View(movie);
         }
@@ -83,6 +87,58 @@ public class MovieController : Controller
         movie.IsAvailable = true;
         _db.Movies!.Add(movie);
         await _db.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+    
+    public async Task<IActionResult> Edit(int id)
+    {
+        var movie = await _db.Movies!.FindAsync(id);
+        if (movie == null) return NotFound();
+
+        ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
+        return View(movie);
+    }
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, Movie movie)
+    {
+        if (id != movie.Id) return BadRequest();
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+            ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
+            return View(movie);
+        }
+
+        _db.Update(movie);
+        await _db.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+    
+    public async Task<IActionResult> Delete(int id)
+    {
+        var movie = await _db.Movies!.Include(m => m.Genre).FirstOrDefaultAsync(m => m.Id == id);
+        if (movie == null) return NotFound();
+
+        return View(movie);
+    }
+    
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var movie = await _db.Movies!.FindAsync(id);
+        if (movie != null)
+        {
+            _db.Movies.Remove(movie);
+            await _db.SaveChangesAsync();
+        }
         return RedirectToAction(nameof(Index));
     }
     
@@ -120,7 +176,7 @@ public class MovieController : Controller
         }
         return RedirectToAction(nameof(Details), new { id = movieId });
     }
-    
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddReview(int movieId, string author, int rating, string? comment, string? tags, bool isSpoiler, string? language)

@@ -6,10 +6,11 @@ public class Customer
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = "Le nom est obligatoire."), StringLength(100)]
-    public string Name { get; set; } = "";
+    [Required(ErrorMessage = "Le nom du client est obligatoire.")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Le nom doit contenir entre 2 et 100 caractères.")]
+    public string Name { get; set; } = null!;
 
-    [EmailAddress(ErrorMessage = "Adresse email invalide.")]
+    [EmailAddress(ErrorMessage = "L'adresse email saisie n'est pas valide.")]
     public string? Email { get; set; }
 
     public int MembershipTypeId { get; set; }
