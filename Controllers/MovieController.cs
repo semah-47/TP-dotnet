@@ -1,171 +1,112 @@
-using ASPCoreFirstApp.Models;
-using ASPCoreFirstApp.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using ASPCoreFirstApp.Models;
+using ASPCoreFirstApp.Services;
+using ASPCoreFirstApp.ViewModels;
 
 namespace ASPCoreFirstApp.Controllers;
 
 public class MovieController : Controller
 {
     private readonly ApplicationDbContext _db;
+    private readonly RentalDbContext _rentalDb;
+    private readonly RentalService _rentalService;
+    private readonly ReviewService _reviewService;
 
-    public MovieController(ApplicationDbContext db)
+    public MovieController(
+        ApplicationDbContext db,
+        RentalDbContext rentalDb,
+        RentalService rentalService,
+        ReviewService reviewService)
     {
         _db = db;
+        _rentalDb = rentalDb;
+        _rentalService = rentalService;
+        _reviewService = reviewService;
     }
-    
-    
-    public IActionResult Index(string? sortOrder, int page = 1)
+
+    public async Task<IActionResult> Index()
     {
-        int pageSize = 3;
-        
-        ViewBag.CurrentSort = sortOrder;
-        ViewBag.NameSortParm = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-        ViewBag.IdSortParm = sortOrder == "id_asc" ? "id_desc" : "id_asc";
-        ViewBag.GenreSortParm = sortOrder == "genre_asc" ? "genre_desc" : "genre_asc";
-        
-        var moviesQuery = _db.Movies!.Include(m => m.Genre).AsQueryable();
-
-        
-        moviesQuery = sortOrder switch
-        {
-            "name_desc" => moviesQuery.OrderByDescending(m => m.Name),
-            "id_asc" => moviesQuery.OrderBy(m => m.Id),
-            "id_desc" => moviesQuery.OrderByDescending(m => m.Id),
-            "genre_asc" => moviesQuery.OrderBy(m => m.Genre!.Name),
-            "genre_desc" => moviesQuery.OrderByDescending(m => m.Genre!.Name),
-            _ => moviesQuery.OrderBy(m => m.Name)
-        };
-
-        
-        int totalItems = moviesQuery.Count();
-        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        if (page < 1) page = 1;
-        if (page > totalPages && totalPages > 0) page = totalPages;
-
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = totalPages;
-
-        
-        var movies = moviesQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
+        var movies = await _db.Movies!.Include(m => m.Genre).ToListAsync();
         return View(movies);
     }
-
-    public IActionResult Details(int id)
-    {
-        var movie = _db.Movies!.FirstOrDefault(m => m.Id == id);
-        if (movie == null)
-            return NotFound("Film introuvable !");
-
-        return View(movie);
-    }
-
+    
     public IActionResult Create()
     {
         ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name");
         return View();
     }
-
+    
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Create(Movie movie)
+    public async Task<IActionResult> Create(Movie movie)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            _db.Movies!.Add(movie);
-            _db.SaveChanges();
-            return RedirectToAction(nameof(Index));
-        } 
-        ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
-        return View(movie);
-    }
-
-    public IActionResult Edit(int id)
-    {
-        var movie = _db.Movies!.Find(id);
-        if (movie == null) return NotFound();
-        
-        ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
-        return View(movie);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public IActionResult Edit(int id, Movie movie)
-    {
-        if (id != movie.Id) return BadRequest();
-
-        if (ModelState.IsValid)
-        {
-            _db.Update(movie);
-            _db.SaveChanges();
-            return RedirectToAction(nameof(Index));
+            ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
+            return View(movie);
         }
-        ViewBag.Genres = new SelectList(_db.Genres, "Id", "Name", movie.GenreId);
-        return View(movie);
-    }
 
-    public IActionResult Delete(int id)
-    {
-        var movie = _db.Movies!.Include(m => m.Genre).FirstOrDefault(m => m.Id == id);
-        if (movie == null) return NotFound();
-        
-        return View(movie);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public IActionResult DeleteConfirmed(int id)
-    {
-        var movie = _db.Movies!.Find(id);
-        if (movie != null)
-        {
-            _db.Movies.Remove(movie);
-            _db.SaveChanges();
-        }
+        movie.IsAvailable = true;
+        _db.Movies!.Add(movie);
+        await _db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
     
-    [Route("Movie/released/{year}/{month}")]
-    public IActionResult ByRelease(int year, int month)
+    public async Task<IActionResult> Details(int id)
     {
-        return Content($"Attribute Routing -> Year: {year}, Month: {month}");
-    }
+        var movie = await _db.Movies!.Include(m => m.Genre).FirstOrDefaultAsync(m => m.Id == id);
+        if (movie == null) return NotFound();
 
-    public IActionResult CustomerMovies()
-    {
-        var viewModel = new MovieCustomerViewModel
-        {
-            Customer = new Customer { Id = 1, Name = "Youssef Ben Ali" },
-            Movies = new List<Movie>
-            {
-                new Movie { Id = 1, Name = "Inception" },
-                new Movie { Id = 2, Name = "Interstellar" },
-                new Movie { Id = 3, Name = "Dune: Part Two" }
-            }
-        };
-        return View(viewModel);
-    }
+        var reviews = await _reviewService.GetByMovieIdAsync(id);
+        var avgRating = await _reviewService.GetAverageRatingAsync(id);
+        var customers = await _rentalDb.Customers
+            .AsNoTracking()
+            .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
+            .ToListAsync();
 
-    public IActionResult CustomerDetails(int id)
-    {
-        var customers = new List<Customer>
+        var vm = new MovieDetailsViewModel
         {
-            new Customer { Id = 1, Name = "Youssef Ben Ali" },
-            new Customer { Id = 2, Name = "Amira Trabelsi" },
-            new Customer { Id = 3, Name = "Mehdi Gharbi" }
+            Movie = movie,
+            Reviews = reviews,
+            AverageRating = avgRating,
+            Customers = customers
         };
-        
-        var customer = customers.FirstOrDefault(c => c.Id == id);
-        
-        if  (customer == null)
-            return NotFound();
-        
-        return View(customer);
+
+        return View(vm);
+    }
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Rent(int movieId, int customerId)
+    {
+        var (success, errorMessage) = await _rentalService.RentMovieAsync(movieId, customerId);
+        if (!success)
+        {
+            TempData["Error"] = errorMessage;
+        }
+        return RedirectToAction(nameof(Details), new { id = movieId });
+    }
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddReview(int movieId, string author, int rating, string? comment, string? tags, bool isSpoiler, string? language)
+    {
+        var review = new MovieReview
+        {
+            MovieId = movieId,
+            Author = string.IsNullOrWhiteSpace(author) ? "Anonyme" : author,
+            Rating = Math.Clamp(rating, 1, 5),
+            Comment = comment,
+            Tags = string.IsNullOrWhiteSpace(tags)
+                ? new List<string>()
+                : tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+            IsSpoiler = isSpoiler ? true : null,
+            Language = string.IsNullOrWhiteSpace(language) ? null : language
+        };
+
+        await _reviewService.AddReviewAsync(review);
+        return RedirectToAction(nameof(Details), new { id = movieId });
     }
 }

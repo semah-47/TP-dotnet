@@ -11,8 +11,10 @@ public class MovieReview
 
     public int MovieId { get; set; }
     public string Author { get; set; } = string.Empty;
-    public int Rating { get; set; } // 1 to 5
+    public int Rating { get; set; } // 1..5
     public string? Comment { get; set; }
-    public List<string> Tags { get; set; } = new(); // Flexible array (e.g., ["Sci-Fi", "MustWatch"])
+    public List<string> Tags { get; set; } = new();
+    public bool? IsSpoiler { get; set; }
+    public string? Language { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
