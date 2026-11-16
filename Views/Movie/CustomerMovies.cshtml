@@ -1,0 +1,13 @@
+@model ASPCoreFirstApp.ViewModels.MovieCustomerViewModel
+
+<div style="font-family: Arial, sans-serif; margin: 30px;">
+    <h2>Client : @Model.Customer?.Name (ID: @Model.Customer?.Id)</h2>
+    <hr />
+    <h3>Films loués :</h3>
+    <ul>
+        @foreach (var movie in Model.Movies!)
+        {
+            <li>@movie.Name</li>
+        }
+    </ul>
+</div>

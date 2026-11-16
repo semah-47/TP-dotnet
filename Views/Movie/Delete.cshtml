@@ -1,0 +1,18 @@
+@model ASPCoreFirstApp.Models.Movie
+
+<div style="width: 45%; margin: 40px auto; font-family: Arial, sans-serif; border: 1px solid #e74c3c; padding: 25px; border-radius: 8px;">
+    <h2 style="color: #c0392b;">Supprimer ce Film ?</h2>
+    <p>Êtes-vous sûr de vouloir supprimer définitivement ce film ?</p>
+    <hr />
+    <p><strong>ID :</strong> @Model.Id</p>
+    <p><strong>Titre :</strong> @Model.Name</p>
+    <p><strong>Genre :</strong> @(Model.Genre?.Name ?? "Aucun")</p>
+
+    <form asp-action="Delete" method="post" style="margin-top: 20px;">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" style="padding: 8px 16px; background-color: #c0392b; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Confirmer la suppression
+        </button>
+        <a asp-action="Index" style="margin-left: 10px;">Annuler</a>
+    </form>
+</div>

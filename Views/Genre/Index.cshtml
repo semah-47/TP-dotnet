@@ -1,0 +1,28 @@
+@model IEnumerable<ASPCoreFirstApp.Models.Genre>
+
+<div style="width: 60%; margin: 40px auto; font-family: Arial, sans-serif;">
+    <h2>Liste des Genres</h2>
+    <p>
+        <a asp-action="Create" style="padding: 8px 14px; background-color: #27ae60; color: white; text-decoration: none; border-radius: 4px;">
+            + Nouveau Genre
+        </a>
+    </p>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+        <tr style="background-color: #2c3e50; color: white; text-align: left;">
+            <th style="padding: 12px;">Id</th>
+            <th style="padding: 12px;">Nom du Genre</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 12px; font-size: 13px; color: #666;">@item.Id</td>
+                <td style="padding: 12px; font-weight: bold;">@item.Name</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

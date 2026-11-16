@@ -1,0 +1,27 @@
+@model IEnumerable<ASPCoreFirstApp.ViewModels.CustomerListItemVM>
+
+<div style="width: 70%; margin: 40px auto; font-family: Arial, sans-serif;">
+    <h2>Liste des Clients</h2>
+    <p><a asp-action="Create" style="padding: 8px 14px; background-color: #27ae60; color: white; text-decoration: none; border-radius: 4px;">+ Nouveau Client</a></p>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+        <thead>
+        <tr style="background-color: #2c3e50; color: white; text-align: left;">
+            <th style="padding: 12px;">Nom</th>
+            <th style="padding: 12px;">Email</th>
+            <th style="padding: 12px;">Abonnement</th>
+            <th style="padding: 12px;">Remise (%)</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 12px; font-weight: bold;">@item.Name</td>
+                <td style="padding: 12px;">@(item.Email ?? "—")</td>
+                <td style="padding: 12px;">@item.MembershipName</td>
+                <td style="padding: 12px;">@item.DiscountPercent %</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
